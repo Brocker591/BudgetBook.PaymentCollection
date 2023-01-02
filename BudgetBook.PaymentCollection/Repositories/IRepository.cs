@@ -1,6 +1,6 @@
-using BudgetBook.Payment.Entities;
+using BudgetBook.PaymentCollection.Entities;
 
-namespace BudgetBook.Payment.Repositories;
+namespace BudgetBook.PaymentCollection.Repositories;
 
 public interface IRepository<T> where T : IEntity
 {

@@ -1,6 +1,6 @@
-using BudgetBook.Payment.Entities;
+using BudgetBook.PaymentCollection.Entities;
 
-namespace BudgetBook.Payment;
+namespace BudgetBook.PaymentCollection;
 
 public static class Extensions
 {
@@ -9,10 +9,11 @@ public static class Extensions
         return new PaymentDto
         (
             payment.Id,
+            payment.UserId,
             payment.Category,
             payment.Company,
             payment.Amount,
-            payment.PaymentType,
+            payment.IsIncome,
             payment.Date,
             payment.Note
         );

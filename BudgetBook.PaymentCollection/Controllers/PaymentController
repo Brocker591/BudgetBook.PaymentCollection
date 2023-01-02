@@ -1,8 +1,8 @@
-using BudgetBook.Payment.Entities;
-using BudgetBook.Payment.Repositories;
+using BudgetBook.PaymentCollection.Entities;
+using BudgetBook.PaymentCollection.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BudgetBook.Payment.Controllers;
+namespace BudgetBook.PaymentCollection.Controllers;
 
 [ApiController]
 [Route("[controller]")]
@@ -42,6 +42,7 @@ public class PaymentsController : ControllerBase
         Payment payment = new()
         {
             Id = Guid.NewGuid(),
+            UserId = dto.UserId,
             Category = dto.Category,
             Company = dto.Company,
             Amount = dto.Amount,
@@ -63,6 +64,7 @@ public class PaymentsController : ControllerBase
         if (exitingDto is null)
             return NotFound();
 
+        exitingDto.UserId = dto.UserId;
         exitingDto.Category = dto.Category;
         exitingDto.Company = dto.Company;
         exitingDto.Amount = dto.Amount;

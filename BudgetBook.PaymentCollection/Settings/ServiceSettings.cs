@@ -1,4 +1,4 @@
-namespace BudgetBook.Payment.Settings;
+namespace BudgetBook.PaymentCollection.Settings;
 
 public class ServiceSettings
 {

@@ -1,1 +1,1 @@
-# BudgetBook.Payment
+# BudgetBook.PaymentCollection

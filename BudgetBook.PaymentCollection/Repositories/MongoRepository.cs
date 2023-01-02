@@ -1,7 +1,7 @@
-using BudgetBook.Payment.Entities;
+using BudgetBook.PaymentCollection.Entities;
 using MongoDB.Driver;
 
-namespace BudgetBook.Payment.Repositories;
+namespace BudgetBook.PaymentCollection.Repositories;
 
 public class MongoRepository<T> : IRepository<T> where T : IEntity
 {

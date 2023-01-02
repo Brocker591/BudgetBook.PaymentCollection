@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net7.0/BudgetBook.Payment.dll",
+            "program": "${workspaceFolder}/bin/Debug/net7.0/BudgetBook.PaymentCollection.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
