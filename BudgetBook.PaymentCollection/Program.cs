@@ -41,32 +41,6 @@ builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider => {
     return new MongoRepository<Payment>(database, serviceSettings.ServiceName);
 });
 
-// builder.Services.AddSingleton(serviceProvider =>
-// {
-//     var configuration = serviceProvider.GetService<IConfiguration>();
-
-//     var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
-//     return mongoClient.GetDatabase(serviceSettings.ServiceName);
-// });
-
-
-//builder.Services.AddSingleton<IRepository<T>>(serviceProvider =>
-//{
-//    var database = serviceProvider.GetService<IMongoDatabase>();
-//    return new MongoRepository<T>(database, collectionName);
-//});  
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

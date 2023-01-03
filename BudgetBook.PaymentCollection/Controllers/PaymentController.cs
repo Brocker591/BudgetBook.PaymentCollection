@@ -6,11 +6,11 @@ namespace BudgetBook.PaymentCollection.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class PaymentsController : ControllerBase
+public class PaymentController : ControllerBase
 {
     private readonly IRepository<Payment> paymentRepository;
 
-    public PaymentsController(IRepository<Payment> paymentRepository)
+    public PaymentController(IRepository<Payment> paymentRepository)
     {
         this.paymentRepository = paymentRepository;
     }
