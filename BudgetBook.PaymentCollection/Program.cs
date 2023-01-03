@@ -1,3 +1,4 @@
+using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
 using BudgetBook.PaymentCollection.Settings;
 using MongoDB.Bson;
@@ -32,13 +33,21 @@ builder.Services.AddControllers();
 BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
 BsonSerializer.RegisterSerializer(new DateTimeSerializer(BsonType.String));
 
-builder.Services.AddSingleton(serviceProvider =>
-{
-    var configuration = serviceProvider.GetService<IConfiguration>();
+
+builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider => {
 
     var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
-    return mongoClient.GetDatabase(serviceSettings.ServiceName);
+    var database = mongoClient.GetDatabase(serviceSettings.ServiceName);
+    return new MongoRepository<Payment>(database, serviceSettings.ServiceName);
 });
+
+// builder.Services.AddSingleton(serviceProvider =>
+// {
+//     var configuration = serviceProvider.GetService<IConfiguration>();
+
+//     var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
+//     return mongoClient.GetDatabase(serviceSettings.ServiceName);
+// });
 
 
 //builder.Services.AddSingleton<IRepository<T>>(serviceProvider =>
