@@ -1,6 +1,8 @@
 using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
 using BudgetBook.PaymentCollection.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -34,12 +36,29 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
 BsonSerializer.RegisterSerializer(new DateTimeSerializer(BsonType.String));
 
 
-builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider => {
+builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider =>
+{
 
     var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
     var database = mongoClient.GetDatabase(serviceSettings.ServiceName);
     return new MongoRepository<Payment>(database, serviceSettings.ServiceName);
 });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://login.microsoftonline.com/b2798870-5df0-4701-ace9-d65b65909aa0";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "https://login.microsoftonline.com/b2798870-5df0-4701-ace9-d65b65909aa0/v2.0",
+            ValidateAudience = true,
+            ValidAudience = "fe925416-35a4-414c-9457-e8944b064d72",
+            ValidateLifetime = true
+        };
+    });
+
+
 
 
 
@@ -58,6 +77,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

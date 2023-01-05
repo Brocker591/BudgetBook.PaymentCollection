@@ -6,7 +6,7 @@ namespace BudgetBook.PaymentCollection;
 public record PaymentDto(
 
     [Required] Guid Id,
-    [Required] Guid UserId,
+            string UserId,
     [Required] string Category,
     [Required] string Company,
     [Required] decimal Amount,
@@ -17,7 +17,7 @@ public record PaymentDto(
 
 public record PaymentCreateDto(
 
-    [Required] Guid UserId,
+    //[Required] Guid UserId,
     [Required] string Category,
     [Required] string Company,
     [Required] decimal Amount,

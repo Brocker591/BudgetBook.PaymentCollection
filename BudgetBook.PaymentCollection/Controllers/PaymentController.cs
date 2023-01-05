@@ -1,6 +1,7 @@
 using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace BudgetBook.PaymentCollection.Controllers;
 
@@ -39,10 +40,18 @@ public class PaymentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PaymentDto>> CreateAsync(PaymentCreateDto dto)
     {
+
+
+
+        var objectId = User.FindFirst("oid")?.Value;
+        if (objectId == null)
+            return BadRequest("Keine objectId vorhanden" + JsonConvert.SerializeObject(User));
+
+
         Payment payment = new()
         {
             Id = Guid.NewGuid(),
-            UserId = dto.UserId,
+            UserId = objectId,
             Category = dto.Category,
             Company = dto.Company,
             Amount = dto.Amount,

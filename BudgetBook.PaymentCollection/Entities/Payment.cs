@@ -5,7 +5,7 @@ namespace BudgetBook.PaymentCollection.Entities;
 public class Payment : IEntity
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public string UserId { get; set; }
     public string Category { get; set; } = string.Empty;
     public string Company { get; set; } = string.Empty;
     public decimal Amount { get; set; }
