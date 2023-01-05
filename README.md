@@ -24,3 +24,9 @@ $cosmosDbConnString="[CONN STRING HERE]"
 
 docker run -it --rm -p 5100:5100 --name paymentcollection -e MongoDbSettings__ConnectionString=$cosmosDbConnString brocker591/budgetbook.paymentcollection:$version
 ```
+
+## Publishing the Docker image
+```powershell
+
+docker push "brocker591/budgetbook.paymentcollection:$version"
+```
