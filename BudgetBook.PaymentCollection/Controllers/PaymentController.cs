@@ -1,10 +1,13 @@
+using System.Security.Claims;
 using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace BudgetBook.PaymentCollection.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class PaymentController : ControllerBase
@@ -36,22 +39,18 @@ public class PaymentController : ControllerBase
     }
 
 
-
     [HttpPost]
     public async Task<ActionResult<PaymentDto>> CreateAsync(PaymentCreateDto dto)
     {
-
-
-
-        var objectId = User.FindFirst("oid")?.Value;
-        if (objectId == null)
-            return BadRequest("Keine objectId vorhanden" + JsonConvert.SerializeObject(User));
+        var user = User.FindFirst("preferred_username")?.Value;
+        if (user == null)
+            return BadRequest("Kein User vorhanden" + JsonConvert.SerializeObject(User));
 
 
         Payment payment = new()
         {
             Id = Guid.NewGuid(),
-            UserId = objectId,
+            UserId = user,
             Category = dto.Category,
             Company = dto.Company,
             Amount = dto.Amount,
@@ -66,14 +65,14 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateAsync(Guid id, PaymentDto dto)
+    public async Task<ActionResult> UpdateAsync(Guid id, PaymentUpdateDto dto)
     {
         var exitingDto = await paymentRepository.GetAsync(id);
 
         if (exitingDto is null)
             return NotFound();
 
-        exitingDto.UserId = dto.UserId;
+
         exitingDto.Category = dto.Category;
         exitingDto.Company = dto.Company;
         exitingDto.Amount = dto.Amount;

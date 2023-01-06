@@ -2,6 +2,7 @@ using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
 using BudgetBook.PaymentCollection.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -45,19 +46,7 @@ builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider =>
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = "https://login.microsoftonline.com/b2798870-5df0-4701-ace9-d65b65909aa0";
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = "https://login.microsoftonline.com/b2798870-5df0-4701-ace9-d65b65909aa0/v2.0",
-            ValidateAudience = true,
-            ValidAudience = "fe925416-35a4-414c-9457-e8944b064d72",
-            ValidateLifetime = true
-        };
-    });
-
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
 
 
