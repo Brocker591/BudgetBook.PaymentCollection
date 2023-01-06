@@ -19,13 +19,31 @@ public class PaymentController : ControllerBase
         this.paymentRepository = paymentRepository;
     }
 
-    [HttpGet]
-    public async Task<IEnumerable<PaymentDto>> GetAllAsync()
+    [HttpGet("All")]
+    public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllAsync()
     {
-        var items = (await paymentRepository.GetAllAsync()).Select(item => item.AsDto());
+        var items = await paymentRepository.GetAllAsync();
+        var payments = items.Select(item => item.AsDto()).ToList();
 
-        return items;
+        return payments;
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllFromUserAsync()
+    {
+        var user = User.FindFirst("preferred_username")?.Value;
+        if (user == null)
+            return BadRequest("Kein User vorhanden");
+
+        var items = (await paymentRepository.GetAllAsync()).Select(item => item.AsDto());
+        var userPayments = items.Where(x => x.UserId == user).ToList();
+
+
+        return userPayments;
+    }
+
+
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PaymentDto>> GetByIdAsync(Guid id)
@@ -38,13 +56,43 @@ public class PaymentController : ControllerBase
         return item.AsDto();
     }
 
+    [HttpGet("{Saldo}")]
+    public async Task<ActionResult<SaldoDto>> GetSaldoFromUserAsync()
+    {
+        var user = User.FindFirst("preferred_username")?.Value;
+        if (user == null)
+            return BadRequest("Kein User vorhanden");
+
+        decimal totalSaldo = 0;
+
+
+        var items = (await paymentRepository.GetAllAsync()).Where(x => x.UserId == user).ToList();
+
+        foreach (var item in items)
+        {
+            if (item.IsIncome)
+            {
+                totalSaldo = totalSaldo + item.Amount;
+            }
+            else
+            {
+                totalSaldo = totalSaldo - item.Amount;
+            }
+
+        }
+
+        return new SaldoDto(totalSaldo);
+
+
+    }
+
 
     [HttpPost]
     public async Task<ActionResult<PaymentDto>> CreateAsync(PaymentCreateDto dto)
     {
         var user = User.FindFirst("preferred_username")?.Value;
         if (user == null)
-            return BadRequest("Kein User vorhanden" + JsonConvert.SerializeObject(User));
+            return BadRequest("Kein User vorhanden");
 
 
         Payment payment = new()

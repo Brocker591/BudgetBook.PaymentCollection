@@ -34,3 +34,7 @@ public record PaymentUpdateDto(
     [Required] DateTime? Date,
     string Note
 );
+
+public record SaldoDto(
+    decimal Saldo
+);
