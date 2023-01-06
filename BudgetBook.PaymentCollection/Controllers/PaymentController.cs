@@ -56,7 +56,7 @@ public class PaymentController : ControllerBase
         return item.AsDto();
     }
 
-    [HttpGet("{Saldo}")]
+    [HttpGet("Saldo")]
     public async Task<ActionResult<SaldoDto>> GetSaldoFromUserAsync()
     {
         var user = User.FindFirst("preferred_username")?.Value;
