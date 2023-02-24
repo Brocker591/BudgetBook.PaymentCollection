@@ -121,20 +121,20 @@ public class PaymentController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAsync(Guid id, PaymentUpdateDto dto)
     {
-        var exitingDto = await paymentRepository.GetAsync(id);
+        var exitsingModel = await paymentRepository.GetAsync(id);
 
-        if (exitingDto is null)
+        if (exitsingModel is null)
             return NotFound();
 
 
-        exitingDto.Category = dto.Category;
-        exitingDto.Company = dto.Company;
-        exitingDto.Amount = dto.Amount;
-        exitingDto.IsIncome = dto.IsIncome;
-        exitingDto.Date = dto.Date;
-        exitingDto.Note = dto.Note;
+        exitsingModel.Category = dto.Category;
+        exitsingModel.Company = dto.Company;
+        exitsingModel.Amount = dto.Amount;
+        exitsingModel.IsIncome = dto.IsIncome;
+        exitsingModel.Date = dto.Date;
+        exitsingModel.Note = dto.Note;
 
-        await paymentRepository.UpdateAsync(exitingDto);
+        await paymentRepository.UpdateAsync(exitsingModel);
 
         return NoContent();
     }
