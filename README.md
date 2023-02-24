@@ -3,7 +3,7 @@
 ## Build the docker image local
 
 ```powershell
-$version="1.0.2"
+$version="1.0.3"
 
 
 docker build -t "brocker591/budgetbook.paymentcollection:$version"  .

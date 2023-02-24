@@ -31,12 +31,14 @@ public class PaymentController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllFromUserAsync()
     {
-        var user = User.FindFirst("preferred_username")?.Value;
+        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (user == null)
             return BadRequest("Kein User vorhanden");
 
+        Guid userId = new Guid(user);
+
         var items = (await paymentRepository.GetAllAsync()).Select(item => item.AsDto());
-        var userPayments = items.Where(x => x.UserId == user).ToList();
+        var userPayments = items.Where(x => x.UserId == userId).ToList();
 
 
         return userPayments;
@@ -59,14 +61,16 @@ public class PaymentController : ControllerBase
     [HttpGet("Saldo")]
     public async Task<ActionResult<SaldoDto>> GetSaldoFromUserAsync()
     {
-        var user = User.FindFirst("preferred_username")?.Value;
+        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (user == null)
             return BadRequest("Kein User vorhanden");
+
+        Guid userId = new Guid(user);
 
         decimal totalSaldo = 0;
 
 
-        var items = (await paymentRepository.GetAllAsync()).Where(x => x.UserId == user).ToList();
+        var items = (await paymentRepository.GetAllAsync()).Where(x => x.UserId == userId).ToList();
 
         foreach (var item in items)
         {
@@ -90,15 +94,17 @@ public class PaymentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PaymentDto>> CreateAsync(PaymentCreateDto dto)
     {
-        var user = User.FindFirst("preferred_username")?.Value;
+        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (user == null)
             return BadRequest("Kein User vorhanden");
+
+        Guid userId = new Guid(user);
 
 
         Payment payment = new()
         {
             Id = Guid.NewGuid(),
-            UserId = user,
+            UserId = userId,
             Category = dto.Category,
             Company = dto.Company,
             Amount = dto.Amount,
