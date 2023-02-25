@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using BudgetBook.Account.Contracts;
 using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -13,10 +15,12 @@ namespace BudgetBook.PaymentCollection.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly IRepository<Payment> paymentRepository;
+    private readonly IPublishEndpoint publishEndpoint;
 
-    public PaymentController(IRepository<Payment> paymentRepository)
+    public PaymentController(IRepository<Payment> paymentRepository, IPublishEndpoint publishEndpoint)
     {
         this.paymentRepository = paymentRepository;
+        this.publishEndpoint = publishEndpoint;
     }
 
     [HttpGet("All")]
@@ -115,6 +119,18 @@ public class PaymentController : ControllerBase
 
         await paymentRepository.CreateAsync(payment);
 
+
+        //Berechnen des Queue Werts für die Zahlung
+        decimal paymentAmount;
+
+        if (dto.IsIncome)
+            paymentAmount = dto.Amount;
+        else
+            paymentAmount = (dto.Amount * -1);
+
+        //Senden in die Queue
+        await publishEndpoint.Publish(new UserBankAccountChange(userId, paymentAmount));
+
         return payment.AsDto();
     }
 
@@ -127,6 +143,17 @@ public class PaymentController : ControllerBase
             return NotFound();
 
 
+        //Korrigieren des Bankkontos
+        decimal paymentAmount;
+
+        if (exitsingModel.IsIncome)
+            paymentAmount = (exitsingModel.Amount * -1);
+        else
+            paymentAmount = exitsingModel.Amount;
+
+        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
+
+
         exitsingModel.Category = dto.Category;
         exitsingModel.Company = dto.Company;
         exitsingModel.Amount = dto.Amount;
@@ -136,16 +163,34 @@ public class PaymentController : ControllerBase
 
         await paymentRepository.UpdateAsync(exitsingModel);
 
+        //Senden des korrekten Wertes
+        if (dto.IsIncome)
+            paymentAmount = dto.Amount;
+        else
+            paymentAmount = (dto.Amount * -1);
+
+        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
+
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> RemoveAsync(Guid id)
     {
-        var exitingDto = await paymentRepository.GetAsync(id);
+        var exitsingModel = await paymentRepository.GetAsync(id);
 
-        if (exitingDto is null)
+        if (exitsingModel is null)
             return NotFound();
+
+        //Korrigieren des Bankkontos
+        decimal paymentAmount;
+
+        if (exitsingModel.IsIncome)
+            paymentAmount = (exitsingModel.Amount * -1);
+        else
+            paymentAmount = exitsingModel.Amount;
+
+        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
 
         await paymentRepository.RemoveAsync(id);
 

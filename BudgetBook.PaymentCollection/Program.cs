@@ -1,6 +1,8 @@
+using System.Reflection;
 using BudgetBook.PaymentCollection.Entities;
 using BudgetBook.PaymentCollection.Repositories;
 using BudgetBook.PaymentCollection.Settings;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
@@ -47,6 +49,55 @@ builder.Services.AddSingleton<IRepository<Payment>>(serviceProvider =>
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+
+
+
+//Einrichtung der MessageBroker
+const string RabbitMQ = "RABBITMQ";
+const string ServiceBus = "SERVICEBUS";
+
+switch (serviceSettings.MessageBroker?.ToUpper())
+{
+    case ServiceBus:
+        builder.Services.AddMassTransit(configure =>
+        {
+
+            configure.AddConsumers(Assembly.GetEntryAssembly());
+            configure.UsingAzureServiceBus((context, configurator) =>
+            {
+                ServiceBusSettings serviceBusSettings = builder.Configuration.GetSection(nameof(ServiceBusSettings)).Get<ServiceBusSettings>();
+
+
+                configurator.Host(serviceBusSettings.ConnectionString);
+                configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
+                configurator.UseMessageRetry((retryConfigurator) => retryConfigurator.Interval(3, TimeSpan.FromSeconds(5)));
+
+            });
+
+        });
+        break;
+    case RabbitMQ:
+    default:
+        builder.Services.AddMassTransit(configure =>
+        {
+
+            configure.AddConsumers(Assembly.GetEntryAssembly());
+            configure.UsingRabbitMq((context, configurator) =>
+            {
+
+                RabbitMQSettings rabbitMQSettings = builder.Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
+
+
+                configurator.Host(rabbitMQSettings.Host);
+                configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
+                configurator.UseMessageRetry((retryConfigurator) => retryConfigurator.Interval(3, TimeSpan.FromSeconds(5)));
+
+            });
+
+        });
+        break;
+}
+
 
 
 

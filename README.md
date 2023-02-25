@@ -3,10 +3,13 @@
 ## Build the docker image local
 
 ```powershell
-$version="1.0.3"
+$version="1.0.4"
 
 
-docker build -t "brocker591/budgetbook.paymentcollection:$version"  .
+$env:GH_OWNER="Brocker591"
+$env:GH_PAT="[PAT HERE]"
+
+docker build --secret id=GH_OWNER --secret id=GH_PAT -t "brocker591/budgetbook.paymentcollection:$version"  .
 
 ```
 
@@ -14,7 +17,7 @@ docker build -t "brocker591/budgetbook.paymentcollection:$version"  .
 
 ```powershell
 
-docker run -it --rm -p 5100:5100 -e MongoDbSettings__Host=mongo --name paymentcollection --network playinfra_default brocker591/budgetbook.paymentcollection:$version
+docker run -it --rm -p 5100:5100 -e MongoDbSettings__Host=mongo -e RabbitMQSettings__Host=rabbitmq --name paymentcollection --network playinfra_default brocker591/budgetbook.paymentcollection:$version
 ```
 
 ## Run the docker image with CosmosDB and Service Bus
