@@ -14,13 +14,15 @@ namespace BudgetBook.PaymentCollection.Controllers;
 [Route("[controller]")]
 public class PaymentController : ControllerBase
 {
+    private readonly ILogger<PaymentController> logger;
     private readonly IRepository<Payment> paymentRepository;
     private readonly IPublishEndpoint publishEndpoint;
 
-    public PaymentController(IRepository<Payment> paymentRepository, IPublishEndpoint publishEndpoint)
+    public PaymentController(IRepository<Payment> paymentRepository, IPublishEndpoint publishEndpoint, ILogger<PaymentController> logger)
     {
         this.paymentRepository = paymentRepository;
         this.publishEndpoint = publishEndpoint;
+        this.logger = logger;
     }
 
     [HttpGet("All")]
@@ -35,17 +37,26 @@ public class PaymentController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllFromUserAsync()
     {
-        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-        if (user == null)
-            return BadRequest("Kein User vorhanden");
+        try
+        {
+            var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+            if (user == null)
+                return BadRequest("Kein User vorhanden");
 
-        Guid userId = new Guid(user);
+            Guid userId = new Guid(user);
 
-        var items = (await paymentRepository.GetAllAsync()).Select(item => item.AsDto());
-        var userPayments = items.Where(x => x.UserId == userId).ToList();
+            var items = (await paymentRepository.GetAllAsync()).Select(item => item.AsDto());
+            var userPayments = items.Where(x => x.UserId == userId).ToList();
 
 
-        return userPayments;
+            return userPayments;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 
 
@@ -98,102 +109,135 @@ public class PaymentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PaymentDto>> CreateAsync(PaymentCreateDto dto)
     {
-        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-        if (user == null)
-            return BadRequest("Kein User vorhanden");
-
-        Guid userId = new Guid(user);
-
-
-        Payment payment = new()
+        try
         {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Category = dto.Category,
-            Company = dto.Company,
-            Amount = dto.Amount,
-            IsIncome = dto.IsIncome,
-            Date = dto.Date,
-            Note = dto.Note
-        };
+            var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+            if (user == null)
+                return BadRequest("Kein User vorhanden");
 
-        await paymentRepository.CreateAsync(payment);
+            Guid userId = new Guid(user);
 
 
-        //Berechnen des Queue Werts für die Zahlung
-        decimal paymentAmount;
+            Payment payment = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Category = dto.Category,
+                Company = dto.Company,
+                Amount = dto.Amount,
+                IsIncome = dto.IsIncome,
+                Date = dto.Date,
+                Note = dto.Note
+            };
 
-        if (dto.IsIncome)
-            paymentAmount = dto.Amount;
-        else
-            paymentAmount = (dto.Amount * -1);
+            await paymentRepository.CreateAsync(payment);
 
-        //Senden in die Queue
-        await publishEndpoint.Publish(new UserBankAccountChange(userId, paymentAmount));
+            logger.LogInformation("Zahlung wurde erstellt");
+            //Berechnen des Queue Werts für die Zahlung
+            decimal paymentAmount;
 
-        return payment.AsDto();
+            if (dto.IsIncome)
+                paymentAmount = dto.Amount;
+            else
+                paymentAmount = (dto.Amount * -1);
+
+
+            logger.LogInformation($"Starte mit Endpoint {publishEndpoint.ToString()}");
+
+            //Senden in die Queue
+            await publishEndpoint.Publish(new UserBankAccountChange(userId, paymentAmount));
+
+            logger.LogInformation("Message gesendet");
+
+
+            return payment.AsDto();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateAsync(Guid id, PaymentUpdateDto dto)
     {
-        var exitsingModel = await paymentRepository.GetAsync(id);
+        try
+        {
+            var exitsingModel = await paymentRepository.GetAsync(id);
 
-        if (exitsingModel is null)
-            return NotFound();
-
-
-        //Korrigieren des Bankkontos
-        decimal paymentAmount;
-
-        if (exitsingModel.IsIncome)
-            paymentAmount = (exitsingModel.Amount * -1);
-        else
-            paymentAmount = exitsingModel.Amount;
-
-        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
+            if (exitsingModel is null)
+                return NotFound();
 
 
-        exitsingModel.Category = dto.Category;
-        exitsingModel.Company = dto.Company;
-        exitsingModel.Amount = dto.Amount;
-        exitsingModel.IsIncome = dto.IsIncome;
-        exitsingModel.Date = dto.Date;
-        exitsingModel.Note = dto.Note;
+            //Korrigieren des Bankkontos
+            decimal paymentAmount;
 
-        await paymentRepository.UpdateAsync(exitsingModel);
+            if (exitsingModel.IsIncome)
+                paymentAmount = (exitsingModel.Amount * -1);
+            else
+                paymentAmount = exitsingModel.Amount;
 
-        //Senden des korrekten Wertes
-        if (dto.IsIncome)
-            paymentAmount = dto.Amount;
-        else
-            paymentAmount = (dto.Amount * -1);
+            await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
 
-        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
 
-        return NoContent();
+            exitsingModel.Category = dto.Category;
+            exitsingModel.Company = dto.Company;
+            exitsingModel.Amount = dto.Amount;
+            exitsingModel.IsIncome = dto.IsIncome;
+            exitsingModel.Date = dto.Date;
+            exitsingModel.Note = dto.Note;
+
+            await paymentRepository.UpdateAsync(exitsingModel);
+
+            //Senden des korrekten Wertes
+            if (dto.IsIncome)
+                paymentAmount = dto.Amount;
+            else
+                paymentAmount = (dto.Amount * -1);
+
+            await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
+
+            return NoContent();
+        }
+        catch (System.Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> RemoveAsync(Guid id)
     {
-        var exitsingModel = await paymentRepository.GetAsync(id);
+        try
+        {
+            var exitsingModel = await paymentRepository.GetAsync(id);
 
-        if (exitsingModel is null)
-            return NotFound();
+            if (exitsingModel is null)
+                return NotFound();
 
-        //Korrigieren des Bankkontos
-        decimal paymentAmount;
+            //Korrigieren des Bankkontos
+            decimal paymentAmount;
 
-        if (exitsingModel.IsIncome)
-            paymentAmount = (exitsingModel.Amount * -1);
-        else
-            paymentAmount = exitsingModel.Amount;
+            if (exitsingModel.IsIncome)
+                paymentAmount = (exitsingModel.Amount * -1);
+            else
+                paymentAmount = exitsingModel.Amount;
 
-        await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
+            await publishEndpoint.Publish(new UserBankAccountChange(exitsingModel.UserId, paymentAmount));
 
-        await paymentRepository.RemoveAsync(id);
+            await paymentRepository.RemoveAsync(id);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (System.Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 }
