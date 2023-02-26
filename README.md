@@ -30,6 +30,17 @@ $cosmosDbConnString="[CONN STRING HERE]"
 docker run -it --rm -p 5100:5100 --name paymentcollection -e MongoDbSettings__ConnectionString=$cosmosDbConnString brocker591/budgetbook.paymentcollection:$version
 ```
 
+## Run the docker image with Azure Rescources
+
+```powershell
+
+$cosmosDbConnString="[CONN STRING HERE]"
+$serviceBusConnString="[CONN STRING HERE]"
+
+docker run -it --rm -p 5100:5100 --name paymentcollection -e MongoDbSettings__ConnectionString=$cosmosDbConnString -e ServiceBusSettings__ConnectionString=$serviceBusConnString -e ServiceSettings__MessageBroker="SERVICEBUS" brocker591/budgetbook.paymentcollection:$version
+
+```
+
 ## Publishing the Docker image
 
 ```powershell

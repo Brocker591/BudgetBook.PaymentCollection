@@ -67,7 +67,6 @@ switch (serviceSettings.MessageBroker?.ToUpper())
             {
                 ServiceBusSettings serviceBusSettings = builder.Configuration.GetSection(nameof(ServiceBusSettings)).Get<ServiceBusSettings>();
 
-
                 configurator.Host(serviceBusSettings.ConnectionString);
                 configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
                 configurator.UseMessageRetry((retryConfigurator) => retryConfigurator.Interval(3, TimeSpan.FromSeconds(5)));
