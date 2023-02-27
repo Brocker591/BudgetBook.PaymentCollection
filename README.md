@@ -3,7 +3,7 @@
 ## Build the docker image local
 
 ```powershell
-$version="1.0.4"
+$version="1.0.5"
 
 
 $env:GH_OWNER="Brocker591"

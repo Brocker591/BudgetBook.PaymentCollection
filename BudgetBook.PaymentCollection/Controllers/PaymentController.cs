@@ -28,10 +28,19 @@ public class PaymentController : ControllerBase
     [HttpGet("All")]
     public async Task<ActionResult<IEnumerable<PaymentDto>>> GetAllAsync()
     {
-        var items = await paymentRepository.GetAllAsync();
-        var payments = items.Select(item => item.AsDto()).ToList();
+        try
+        {
+            var items = await paymentRepository.GetAllAsync();
+            var payments = items.Select(item => item.AsDto()).ToList();
 
-        return payments;
+            return payments;
+        }
+        catch (System.Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 
     [HttpGet]
@@ -65,42 +74,60 @@ public class PaymentController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PaymentDto>> GetByIdAsync(Guid id)
     {
-        var item = await paymentRepository.GetAsync(id);
+        try
+        {
+            var item = await paymentRepository.GetAsync(id);
 
-        if (item == null)
-            return NotFound();
+            if (item == null)
+                return NotFound();
 
-        return item.AsDto();
+            return item.AsDto();
+        }
+        catch (System.Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+
     }
 
     [HttpGet("Saldo")]
     public async Task<ActionResult<SaldoDto>> GetSaldoFromUserAsync()
     {
-        var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-        if (user == null)
-            return BadRequest("Kein User vorhanden");
-
-        Guid userId = new Guid(user);
-
-        decimal totalSaldo = 0;
-
-
-        var items = (await paymentRepository.GetAllAsync()).Where(x => x.UserId == userId).ToList();
-
-        foreach (var item in items)
+        try
         {
-            if (item.IsIncome)
+            var user = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+            if (user == null)
+                return BadRequest("Kein User vorhanden");
+
+            Guid userId = new Guid(user);
+
+            decimal totalSaldo = 0;
+
+
+            var items = (await paymentRepository.GetAllAsync()).Where(x => x.UserId == userId).ToList();
+
+            foreach (var item in items)
             {
-                totalSaldo = totalSaldo + item.Amount;
-            }
-            else
-            {
-                totalSaldo = totalSaldo - item.Amount;
+                if (item.IsIncome)
+                {
+                    totalSaldo = totalSaldo + item.Amount;
+                }
+                else
+                {
+                    totalSaldo = totalSaldo - item.Amount;
+                }
+
             }
 
+            return new SaldoDto(totalSaldo);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
         }
 
-        return new SaldoDto(totalSaldo);
 
 
     }
