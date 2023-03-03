@@ -11,8 +11,13 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
+
+
+
 var builder = WebApplication.CreateBuilder(args);
 
+
+AllowedOriginSettings AllowedOriginSetting = builder.Configuration.GetSection(nameof(AllowedOriginSettings)).Get<AllowedOriginSettings>();
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 MongoDbSettings mongoDbSettings = builder.Configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
 
@@ -113,6 +118,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(builder =>
+{
+    builder.WithOrigins(AllowedOriginSetting.AllowedOrigin)
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+});
 
 app.UseHttpsRedirection();
 
