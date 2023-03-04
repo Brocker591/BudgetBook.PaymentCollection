@@ -21,17 +21,27 @@ AllowedOriginSettings AllowedOriginSetting = builder.Configuration.GetSection(na
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 MongoDbSettings mongoDbSettings = builder.Configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
 
-builder.Services.AddCors(o =>
-             {
-                 o.AddPolicy("AllowSetOrigins", options =>
-                 {
+// builder.Services.AddCors(o =>
+//              {
+//                  o.AddPolicy("AllowSetOrigins", options =>
+//                  {
+//                      options.AllowAnyOrigin();
+//                      options.AllowAnyHeader();
+//                      options.AllowAnyMethod();
 
-                     options.AllowAnyOrigin();
-                     options.AllowAnyHeader();
-                     options.AllowAnyMethod();
+//                  });
+//              });
 
-                 });
-             });
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        });
+});
+
+
 
 // Add services to the container.
 
@@ -119,12 +129,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(builder =>
-{
-    builder.WithOrigins(AllowedOriginSetting.AllowedOrigin)
-        .AllowAnyHeader()
-        .AllowAnyMethod();
-});
+app.UseCors();
+
+
 
 app.UseHttpsRedirection();
 
